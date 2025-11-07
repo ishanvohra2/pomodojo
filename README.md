@@ -44,8 +44,8 @@ PomoDojo is a gamified Pomodoro timer that transforms your productivity sessions
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js (v16 or higher)
-- npm, yarn, or bun
+- Node.js (v16 or higher) OR Bun (recommended)
+- This project uses Bun for faster builds
 
 ### Installation
 
@@ -135,13 +135,13 @@ pomodojo/
 
 ### Build for Production
 ```bash
-npm run build
+bun run build
 # Output will be in the dist/ directory
 ```
 
 ### Preview Production Build
 ```bash
-npm run preview
+bun run preview
 ```
 
 ### Customize Configuration
@@ -174,12 +174,12 @@ This project is configured for automatic deployment to GitHub Pages at `ishanvoh
 
 **Manual deployment (optional):**
 ```bash
-npm run deploy  # Builds the app with .nojekyll file
+bun run deploy  # Builds the app with .nojekyll file
 ```
 
 ### Deploy to Vercel/Netlify
 1. Import your Git repository
-2. Build command: `npm run build`
+2. Build command: `bun run build`
 3. Output directory: `dist`
 4. Deploy!
 
