@@ -193,18 +193,12 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## 🙏 Acknowledgments
 
-- Pixel art sprites for creating the fighting game aesthetic
+- Pixel art sprites for creating the fighting game aesthetic (itch.io)
 - Pomodoro Technique by Francesco Cirillo
 - Svelte team for the amazing framework
 
-## 📞 Contact
-
-Created by [Your Name] - Feel free to reach out!
-
-- GitHub: [@yourusername](https://github.com/yourusername)
-- Email: your.email@example.com
-
 ---
+
 
 **Ready to train your focus?** Start your first mission and defeat procrastination! 🥋⚔️
 
