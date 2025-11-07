@@ -149,17 +149,33 @@ Edit `vite.config.js` to modify build settings, plugins, or optimization options
 
 ## 🌐 Deployment
 
-### Deploy to GitHub Pages
-1. Create a repository on GitHub
-2. Add the remote:
+### Deploy to GitHub Pages (Automated)
+
+This project is configured for automatic deployment to GitHub Pages at `ishanvohra2.github.io/pomodojo`.
+
+**Setup Steps:**
+
+1. **Enable GitHub Pages in your repository settings:**
+   - Go to your repository on GitHub
+   - Navigate to **Settings** → **Pages**
+   - Under "Build and deployment", set **Source** to "GitHub Actions"
+
+2. **Push your code:**
    ```bash
-   git remote add origin https://github.com/yourusername/pomodojo.git
+   git add .
+   git commit -m "Configure GitHub Pages deployment"
+   git push origin main
    ```
-3. Push your code:
-   ```bash
-   git push -u origin master
-   ```
-4. Configure GitHub Pages in repository settings
+
+3. **Automatic deployment:**
+   - GitHub Actions will automatically build and deploy on every push to `main`
+   - Check the **Actions** tab to monitor deployment progress
+   - Your app will be live at `https://ishanvohra2.github.io/pomodojo/`
+
+**Manual deployment (optional):**
+```bash
+npm run deploy  # Builds the app with .nojekyll file
+```
 
 ### Deploy to Vercel/Netlify
 1. Import your Git repository
