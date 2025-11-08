@@ -17,7 +17,11 @@
   
   // Animation states
   let heroAnimation = 'idle'; // 'idle', 'attack', 'hurt'
-  let enemyAnimation = 'idle'; // 'idle', 'attack', 'death'
+  let enemyAnimation = 'idle'; // 'idle', 'attack', 'death', 'hurt'
+  
+  // Fight sequence state
+  let inFightSequence = false; // Whether we're in the dramatic fight sequence
+  let fightStep = 0; // Current step in the fight sequence
   
   // Timer variables
   let totalTimeRemaining = 0; // Total mission time in seconds
@@ -112,49 +116,99 @@
   
   function handleTimerComplete() {
     clearInterval(timerInterval);
-    timerState = 'failed'; // Timer ran out = defeat
     
-    // Play defeat animations
-    enemyAnimation = 'attack';
-    heroAnimation = 'hurt';
+    // Start fight sequence - player loses this one
+    startFightSequence(false);
     
-    // Mark task as failed and save to history
-    activeTask.status = 'failed';
-    activeTask.endTime = Date.now();
-    saveToHistory(activeTask);
-    
-    // After attack animation, enemy goes back to idle
-    setTimeout(() => {
-      enemyAnimation = 'idle';
-    }, 1000); // Adjust timing based on attack animation length
-    
-    console.log('Timer ran out! Enemy attacks!');
+    console.log('Timer ran out! Starting fight sequence - player loses');
   }
   
   function handleMarkComplete() {
     clearInterval(timerInterval);
     
-    // Play victory animations
-    heroAnimation = 'attack';
-    enemyAnimation = 'death';
+    // Start fight sequence - player wins this one
+    startFightSequence(true);
     
-    // After attack animation, hero goes back to idle, then reset
+    console.log('Task completed! Starting fight sequence - player wins');
+  }
+  
+  // Dramatic fight sequence with multiple steps
+  function startFightSequence(playerWins) {
+    inFightSequence = true;
+    fightStep = 0;
+    
+    // Step 1: Characters move closer to center (0.8s)
     setTimeout(() => {
-      heroAnimation = 'idle';
+      fightStep = 1; // This will trigger CSS transition to move characters
       
-      // Save and reset after animations complete
-      activeTask.status = 'completed';
-      activeTask.endTime = Date.now();
-      console.log('Task marked complete:', activeTask);
-      
-      // Save to history
-      saveToHistory(activeTask);
-      
-      // Wait a bit to show victory, then reset
+      // Step 2: Player attacks (1.2s after moving)
       setTimeout(() => {
-        resetTimer();
-      }, 1500);
-    }, 1000); // Adjust timing based on attack animation length
+        heroAnimation = 'attack';
+        
+        // Enemy gets hurt after attack animation plays out (delay for impact)
+        setTimeout(() => {
+          enemyAnimation = 'hurt';
+        }, 500); // Delay for attack to land
+        
+        // Step 3: Reset to idle, then enemy attacks, player hurts (1.8s after player attack)
+        setTimeout(() => {
+          heroAnimation = 'idle';
+          enemyAnimation = 'idle';
+          
+          setTimeout(() => {
+            enemyAnimation = 'attack';
+            
+            // Player gets hurt after enemy attack lands
+            setTimeout(() => {
+              heroAnimation = 'hurt';
+            }, 400); // Delay for attack to land
+            
+            // Step 4: Final outcome (1.5s after player hurt)
+            setTimeout(() => {
+              if (playerWins) {
+                // Player wins: Hero attacks
+                heroAnimation = 'attack';
+                
+                // Enemy dies after hero's attack lands
+                setTimeout(() => {
+                  enemyAnimation = 'death';
+                  
+                  // Complete the task and reset immediately after death animation
+                  setTimeout(() => {
+                    activeTask.status = 'completed';
+                    activeTask.endTime = Date.now();
+                    saveToHistory(activeTask);
+                    
+                    // Reset immediately to avoid awkward idle frame
+                    resetTimer();
+                  }, 1000); // Time for death animation to complete
+                }, 500); // Delay for final attack to land
+              } else {
+                // Player loses: Enemy attacks again
+                enemyAnimation = 'attack';
+                
+                // Player hurt after enemy attack lands
+                setTimeout(() => {
+                  heroAnimation = 'hurt';
+                  timerState = 'failed';
+                  
+                  // Mark task as failed and save to history
+                  activeTask.status = 'failed';
+                  activeTask.endTime = Date.now();
+                  saveToHistory(activeTask);
+                  
+                  // Reset animations but keep in failed state to show extend options
+                  setTimeout(() => {
+                    enemyAnimation = 'idle';
+                    inFightSequence = false;
+                  }, 800);
+                }, 400); // Delay for attack to land
+              }
+            }, 1500);
+          }, 500);
+        }, 1800);
+      }, 1200);
+    }, 800);
   }
   
   function handleAbortTask() {
@@ -177,6 +231,8 @@
     currentSessionRemaining = 0;
     heroAnimation = 'idle';
     enemyAnimation = 'idle';
+    inFightSequence = false;
+    fightStep = 0;
     taskConfig = {
       title: '',
       description: '',
@@ -195,6 +251,8 @@
     heroAnimation = 'idle';
     enemyAnimation = 'idle';
     timerState = 'focus';
+    inFightSequence = false;
+    fightStep = 0;
     
     // Restart timer if it was stopped
     if (!timerInterval) {
@@ -285,6 +343,8 @@
   currentEnemy={currentEnemy}
   heroAnimation={heroAnimation}
   enemyAnimation={enemyAnimation}
+  inFightSequence={inFightSequence}
+  fightStep={fightStep}
 />
 
 <!-- Render TaskModal component and pass props -->

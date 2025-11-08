@@ -14,7 +14,9 @@
   export let onExtendTimer;
   export let currentEnemy = 1; // Which enemy to show (1, 2, or 3)
   export let heroAnimation = 'idle'; // 'idle', 'attack', 'hurt'
-  export let enemyAnimation = 'idle'; // 'idle', 'attack', 'death'
+  export let enemyAnimation = 'idle'; // 'idle', 'attack', 'death', 'hurt'
+  export let inFightSequence = false; // Whether in dramatic fight sequence
+  export let fightStep = 0; // Current step in fight sequence
   
   let extendMinutes = 15; // Default extend time
   
@@ -68,7 +70,7 @@
   </button>
   
   <!-- Bottom Container - Horizontal Layout (like LinearLayout) -->
-  <div class="bottom-container" class:combat={activeTask}>
+  <div class="bottom-container" class:fighting={inFightSequence && fightStep > 0}>
     <!-- Hero character (left) -->
     <div class="hero-container">
       <div class="hero {heroAnimation}"></div>
@@ -284,11 +286,11 @@
     align-items: flex-end; /* Align to bottom baseline */
     padding: 0 8%;
     z-index: 2;
-    transition: all 0.5s ease;
+    transition: all 0.8s ease;
   }
   
-  /* Combat mode - bring characters closer */
-  .bottom-container.combat {
+  /* Fighting mode - bring characters closer for dramatic combat */
+  .bottom-container.fighting {
     justify-content: center;
     gap: 0px; /* Space between hero and enemy - close combat */
     padding: 0; /* Remove side padding to center properly */
@@ -297,11 +299,11 @@
   /* Hero container - no positioning needed, flex handles it */
   .hero-container {
     flex-shrink: 0;
-    transition: margin 0.5s ease;
+    transition: margin 0.8s ease;
   }
   
-  /* In combat mode, move hero closer */
-  .combat .hero-container {
+  /* In fighting mode, move hero closer */
+  .fighting .hero-container {
     margin-right: -100px; /* Move right to get closer to enemy */
   }
   
@@ -383,7 +385,7 @@
   .enemy-container {
     flex-shrink: 0;
     transform: scaleX(-1); /* Flip to face left */
-    transition: margin 0.5s ease;
+    transition: margin 0.8s ease;
   }
   
   /* Enemy-specific vertical alignment adjustments */
@@ -399,8 +401,8 @@
     margin-bottom: -170px; /* Enemy 3 alignment */
   }
   
-  /* In combat mode, bring enemy much closer with negative margin */
-  .combat .enemy-container {
+  /* In fighting mode, bring enemy much closer with negative margin */
+  .fighting .enemy-container {
     margin-left: -250px; /* Overlap to get closer */
   }
   
@@ -433,6 +435,17 @@
   @keyframes enemy-1-attack {
     from { background-position: 0 0; }
     to { background-position: -4800px 0; } /* 8 frames × 600px */
+  }
+  
+  /* Enemy 1 - Hurt */
+  .enemy.hurt.enemy-1 {
+    background-image: url('/assets/enemy1/sprites/Take hit.png');
+    animation: enemy-1-hurt 0.5s steps(4) forwards;
+  }
+  
+  @keyframes enemy-1-hurt {
+    from { background-position: 0 0; }
+    to { background-position: -2400px 0; } /* 4 frames × 600px */
   }
   
   /* Enemy 1 - Death */
@@ -468,6 +481,17 @@
     to { background-position: -3000px 0; } /* 5 frames × 600px */
   }
   
+  /* Enemy 2 - Hurt */
+  .enemy.hurt.enemy-2 {
+    background-image: url('/assets/enemy2/sprites/Take hit.png');
+    animation: enemy-2-hurt 0.5s steps(3) forwards;
+  }
+  
+  @keyframes enemy-2-hurt {
+    from { background-position: 0 0; }
+    to { background-position: -1800px 0; } /* 3 frames × 600px */
+  }
+  
   /* Enemy 2 - Death */
   .enemy.death.enemy-2 {
     background-image: url('/assets/enemy2/sprites/Death.png');
@@ -499,6 +523,17 @@
   @keyframes enemy-3-attack {
     from { background-position: 0 0; }
     to { background-position: -3600px 0; } /* 6 frames × 600px */
+  }
+  
+  /* Enemy 3 - Hurt */
+  .enemy.hurt.enemy-3 {
+    background-image: url('/assets/enemy3/sprites/Take hit.png');
+    animation: enemy-3-hurt 0.5s steps(3) forwards;
+  }
+  
+  @keyframes enemy-3-hurt {
+    from { background-position: 0 0; }
+    to { background-position: -1800px 0; } /* 3 frames × 600px */
   }
   
   /* Enemy 3 - Death */
