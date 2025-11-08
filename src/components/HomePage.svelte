@@ -24,7 +24,7 @@
     2: "Inertius",    // The ancient warrior of inaction and stillness
     3: "Malingor"     // The cunning master of excuses and avoidance
   };
-  j
+  
   // Helper function to format seconds to MM:SS
   function formatTime(seconds) {
     const mins = Math.floor(seconds / 60);
