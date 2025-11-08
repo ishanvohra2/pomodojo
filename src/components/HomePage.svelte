@@ -18,6 +18,13 @@
   
   let extendMinutes = 15; // Default extend time
   
+  // Enemy names - each corresponds to procrastination/laziness
+  const enemyNames = {
+    1: "Lethargoth",  // The dark lord of lethargy and exhaustion
+    2: "Inertius",    // The ancient warrior of inaction and stillness
+    3: "Malingor"     // The cunning master of excuses and avoidance
+  };
+  j
   // Helper function to format seconds to MM:SS
   function formatTime(seconds) {
     const mins = Math.floor(seconds / 60);
@@ -76,7 +83,7 @@
         </button>
       {:else}
         <!-- Enemy character - Only show when task is active -->
-        <div class="enemy-container">
+        <div class="enemy-container enemy-container-{currentEnemy}">
           <div class="enemy {enemyAnimation} enemy-{currentEnemy}"></div>
         </div>
       {/if}
@@ -114,7 +121,7 @@
       
       <!-- Right: Enemy Name -->
       <div class="hud-right">
-        <div class="enemy-label">PROCRASTINATION</div>
+        <div class="enemy-label">{enemyNames[currentEnemy]?.toUpperCase()}</div>
       </div>
     </div>
     
@@ -376,8 +383,20 @@
   .enemy-container {
     flex-shrink: 0;
     transform: scaleX(-1); /* Flip to face left */
-    margin-bottom: -140px; /* Push down to align character feet with hero */
     transition: margin 0.5s ease;
+  }
+  
+  /* Enemy-specific vertical alignment adjustments */
+  .enemy-container-1 {
+    margin-bottom: -140px; /* Enemy 1 alignment */
+  }
+  
+  .enemy-container-2 {
+    margin-bottom: -160px; /* Enemy 2 alignment */
+  }
+  
+  .enemy-container-3 {
+    margin-bottom: -170px; /* Enemy 3 alignment */
   }
   
   /* In combat mode, bring enemy much closer with negative margin */
