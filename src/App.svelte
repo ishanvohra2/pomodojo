@@ -3,10 +3,13 @@
   import HomePage from './components/HomePage.svelte';
   import TaskModal from './components/TaskModal.svelte';
   import HistoryView from './components/HistoryView.svelte';
+  import MusicModal from './components/MusicModal.svelte';
+  import { audioManager } from './utils/audioManager.js';
   
   // App state
   let showTaskModal = false;
   let showHistoryView = false;
+  let showMusicModal = false;
   let activeTask = null; // Stores current task data
   let timerState = 'idle'; // 'idle', 'focus', 'break', 'completed', 'failed'
   let currentEnemy = 1; // Random enemy (1, 2, or 3)
@@ -28,6 +31,14 @@
     totalFocusTime: 0,
     focusSessionLength: 0,
     breakDuration: 0
+  };
+  
+  // Music state
+  let musicState = {
+    currentStation: null,
+    isPlaying: false,
+    volume: 0.3,
+    isMuted: false
   };
   
   // Event handlers
@@ -202,6 +213,27 @@
     showHistoryView = false;
   }
   
+  function handleOpenMusic() {
+    showMusicModal = true;
+    // Update music state from manager
+    updateMusicState();
+  }
+  
+  function handleCloseMusic() {
+    showMusicModal = false;
+    // Sync state after modal closes
+    updateMusicState();
+  }
+  
+  function updateMusicState() {
+    musicState = {
+      currentStation: audioManager.currentStation,
+      isPlaying: audioManager.isPlaying,
+      volume: audioManager.volume,
+      isMuted: audioManager.isMuted
+    };
+  }
+  
   // Save task to history (localStorage)
   function saveToHistory(task) {
     taskHistory = [...taskHistory, task];
@@ -226,11 +258,13 @@
   // Load history when component mounts
   onMount(() => {
     loadHistory();
+    audioManager.init();
   });
   
   // Cleanup timer on component destroy
   onDestroy(() => {
     if (timerInterval) clearInterval(timerInterval);
+    audioManager.cleanup();
   });
 </script>
 
@@ -238,6 +272,8 @@
 <HomePage 
   onStartTask={handleStartTask}
   onViewHistory={handleViewHistory}
+  onOpenMusic={handleOpenMusic}
+  musicState={musicState}
   activeTask={activeTask}
   timerState={timerState}
   totalTimeRemaining={totalTimeRemaining}
@@ -263,6 +299,16 @@
   show={showHistoryView}
   onClose={handleCloseHistory}
   history={taskHistory}
+/>
+
+<!-- Render MusicModal component -->
+<MusicModal
+  show={showMusicModal}
+  onClose={handleCloseMusic}
+  currentStation={musicState.currentStation}
+  isPlaying={musicState.isPlaying}
+  volume={musicState.volume}
+  isMuted={musicState.isMuted}
 />
 
 <style>

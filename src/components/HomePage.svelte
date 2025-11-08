@@ -2,6 +2,8 @@
   // Props - functions and data passed from parent
   export let onStartTask;
   export let onViewHistory;
+  export let onOpenMusic;
+  export let musicState;
   export let activeTask = null;
   export let timerState = 'idle';
   export let totalTimeRemaining = 0;
@@ -42,6 +44,16 @@
       <p class="subtitle">Train your focus, defeat procrastination</p>
     </div>
   {/if}
+  
+  <!-- Music icon button (top right, left of history) -->
+  <button 
+    class="music-btn" 
+    on:click={onOpenMusic} 
+    title="Music Control"
+    class:playing={musicState?.isPlaying}
+  >
+    {musicState?.isPlaying ? '🔊' : '🔇'}
+  </button>
   
   <!-- History icon button (top right) -->
   <button class="history-btn" on:click={onViewHistory} title="View History">
@@ -185,6 +197,45 @@
     font-weight: 300;
   }
   
+  /* Music icon button (top right, left of history button) */
+  .music-btn {
+    position: absolute;
+    top: 30px;
+    right: 120px; /* Left of history button */
+    background: rgba(0, 0, 0, 0.6);
+    border: 3px solid rgba(255, 215, 0, 0.5);
+    border-radius: 50%;
+    width: 70px;
+    height: 70px;
+    font-size: 32px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .music-btn:hover {
+    background: rgba(0, 0, 0, 0.8);
+    border-color: #FFD700;
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+  }
+  
+  .music-btn.playing {
+    border-color: #4caf50;
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+  }
+  
+  .music-btn.playing:hover {
+    border-color: #66bb6a;
+  }
+  
+  .music-btn:active {
+    transform: scale(1.05);
+  }
+  
   /* History icon button (top right) */
   .history-btn {
     position: absolute;
@@ -325,7 +376,7 @@
   .enemy-container {
     flex-shrink: 0;
     transform: scaleX(-1); /* Flip to face left */
-    margin-bottom: -170px; /* Push down to align character feet with hero */
+    margin-bottom: -140px; /* Push down to align character feet with hero */
     transition: margin 0.5s ease;
   }
   
