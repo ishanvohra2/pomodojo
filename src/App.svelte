@@ -3,13 +3,11 @@
   import HomePage from './components/HomePage.svelte';
   import TaskModal from './components/TaskModal.svelte';
   import HistoryView from './components/HistoryView.svelte';
-  import MusicModal from './components/MusicModal.svelte';
   import { audioManager } from './utils/audioManager.js';
   
   // App state
   let showTaskModal = false;
   let showHistoryView = false;
-  let showMusicModal = false;
   let activeTask = null; // Stores current task data
   let timerState = 'idle'; // 'idle', 'focus', 'break', 'completed', 'failed'
   let currentEnemy = 1; // Random enemy (1, 2, or 3)
@@ -22,6 +20,8 @@
   // Fight sequence state
   let inFightSequence = false; // Whether we're in the dramatic fight sequence
   let fightStep = 0; // Current step in the fight sequence
+  let fightTimeouts = []; // Store timeout IDs for cleanup/skip
+  let currentFightResult = null; // Store whether player wins or loses
   
   // Timer variables
   let totalTimeRemaining = 0; // Total mission time in seconds
@@ -37,13 +37,8 @@
     breakDuration: 0
   };
   
-  // Music state
-  let musicState = {
-    currentStation: null,
-    isPlaying: false,
-    volume: 0.3,
-    isMuted: false
-  };
+  // Music state - simple boolean
+  let isMusicPlaying = false;
   
   // Event handlers
   function handleStartTask() {
@@ -132,83 +127,152 @@
     console.log('Task completed! Starting fight sequence - player wins');
   }
   
-  // Dramatic fight sequence with multiple steps
+  // Helper function to end the fight and show results
+  function endFightSequence(playerWins) {
+    // Clear any remaining timeouts
+    fightTimeouts.forEach(id => clearTimeout(id));
+    fightTimeouts = [];
+    
+    if (playerWins) {
+      activeTask.status = 'completed';
+      activeTask.endTime = Date.now();
+      saveToHistory(activeTask);
+      
+      // Restore main music after fight
+      audioManager.restoreMainMusic().then(() => {
+        isMusicPlaying = audioManager.isPlaying;
+      });
+      
+      // Reset immediately
+      resetTimer();
+    } else {
+      timerState = 'failed';
+      activeTask.status = 'failed';
+      activeTask.endTime = Date.now();
+      saveToHistory(activeTask);
+      
+      // Restore main music after fight
+      audioManager.restoreMainMusic().then(() => {
+        isMusicPlaying = audioManager.isPlaying;
+      });
+      
+      // Reset animations but keep in failed state to show extend options
+      enemyAnimation = 'idle';
+      heroAnimation = 'idle';
+      inFightSequence = false;
+    }
+  }
+
+  // Skip fight sequence - jump to end
+  function handleSkipFight() {
+    console.log('Skipping fight sequence');
+    endFightSequence(currentFightResult);
+  }
+
+  // Extended fight sequence - now 20 seconds with more back and forth
   function startFightSequence(playerWins) {
     inFightSequence = true;
     fightStep = 0;
+    currentFightResult = playerWins;
+    fightTimeouts = []; // Reset timeouts array
     
-    // Step 1: Characters move closer to center (0.8s)
-    setTimeout(() => {
-      fightStep = 1; // This will trigger CSS transition to move characters
+    // Start fight music
+    audioManager.playFightMusic();
+    
+    // Step 1: Characters move closer to center (1s)
+    fightTimeouts.push(setTimeout(() => {
+      fightStep = 1;
       
-      // Step 2: Player attacks (1.2s after moving)
-      setTimeout(() => {
+      // Step 2: Player attacks (1.5s)
+      fightTimeouts.push(setTimeout(() => {
         heroAnimation = 'attack';
-        
-        // Enemy gets hurt after attack animation plays out (delay for impact)
-        setTimeout(() => {
+        fightTimeouts.push(setTimeout(() => {
           enemyAnimation = 'hurt';
-        }, 500); // Delay for attack to land
+        }, 500));
         
-        // Step 3: Reset to idle, then enemy attacks, player hurts (1.8s after player attack)
-        setTimeout(() => {
+        // Step 3: Enemy counters (2.5s)
+        fightTimeouts.push(setTimeout(() => {
           heroAnimation = 'idle';
           enemyAnimation = 'idle';
           
-          setTimeout(() => {
+          fightTimeouts.push(setTimeout(() => {
             enemyAnimation = 'attack';
-            
-            // Player gets hurt after enemy attack lands
-            setTimeout(() => {
+            fightTimeouts.push(setTimeout(() => {
               heroAnimation = 'hurt';
-            }, 400); // Delay for attack to land
+            }, 400));
             
-            // Step 4: Final outcome (1.5s after player hurt)
-            setTimeout(() => {
-              if (playerWins) {
-                // Player wins: Hero attacks
+            // Step 4: Player attacks again (2.5s)
+            fightTimeouts.push(setTimeout(() => {
+              heroAnimation = 'idle';
+              enemyAnimation = 'idle';
+              
+              fightTimeouts.push(setTimeout(() => {
                 heroAnimation = 'attack';
+                fightTimeouts.push(setTimeout(() => {
+                  enemyAnimation = 'hurt';
+                }, 500));
                 
-                // Enemy dies after hero's attack lands
-                setTimeout(() => {
-                  enemyAnimation = 'death';
+                // Step 5: Enemy attacks again (2.5s)
+                fightTimeouts.push(setTimeout(() => {
+                  heroAnimation = 'idle';
+                  enemyAnimation = 'idle';
                   
-                  // Complete the task and reset immediately after death animation
-                  setTimeout(() => {
-                    activeTask.status = 'completed';
-                    activeTask.endTime = Date.now();
-                    saveToHistory(activeTask);
+                  fightTimeouts.push(setTimeout(() => {
+                    enemyAnimation = 'attack';
+                    fightTimeouts.push(setTimeout(() => {
+                      heroAnimation = 'hurt';
+                    }, 400));
                     
-                    // Reset immediately to avoid awkward idle frame
-                    resetTimer();
-                  }, 1000); // Time for death animation to complete
-                }, 500); // Delay for final attack to land
-              } else {
-                // Player loses: Enemy attacks again
-                enemyAnimation = 'attack';
-                
-                // Player hurt after enemy attack lands
-                setTimeout(() => {
-                  heroAnimation = 'hurt';
-                  timerState = 'failed';
-                  
-                  // Mark task as failed and save to history
-                  activeTask.status = 'failed';
-                  activeTask.endTime = Date.now();
-                  saveToHistory(activeTask);
-                  
-                  // Reset animations but keep in failed state to show extend options
-                  setTimeout(() => {
-                    enemyAnimation = 'idle';
-                    inFightSequence = false;
-                  }, 800);
-                }, 400); // Delay for attack to land
-              }
-            }, 1500);
-          }, 500);
-        }, 1800);
-      }, 1200);
-    }, 800);
+                    // Step 6: Another exchange (2.5s)
+                    fightTimeouts.push(setTimeout(() => {
+                      heroAnimation = 'idle';
+                      enemyAnimation = 'idle';
+                      
+                      fightTimeouts.push(setTimeout(() => {
+                        heroAnimation = 'attack';
+                        fightTimeouts.push(setTimeout(() => {
+                          enemyAnimation = 'hurt';
+                        }, 500));
+                        
+                        // Step 7: Final outcome (3s)
+                        fightTimeouts.push(setTimeout(() => {
+                          heroAnimation = 'idle';
+                          enemyAnimation = 'idle';
+                          
+                          fightTimeouts.push(setTimeout(() => {
+                            if (playerWins) {
+                              // Player wins: Final attack
+                              heroAnimation = 'attack';
+                              fightTimeouts.push(setTimeout(() => {
+                                enemyAnimation = 'death';
+                                
+                                fightTimeouts.push(setTimeout(() => {
+                                  endFightSequence(true);
+                                }, 1500));
+                              }, 500));
+                            } else {
+                              // Player loses: Enemy final attack
+                              enemyAnimation = 'attack';
+                              fightTimeouts.push(setTimeout(() => {
+                                heroAnimation = 'hurt';
+                                
+                                fightTimeouts.push(setTimeout(() => {
+                                  endFightSequence(false);
+                                }, 1000));
+                              }, 400));
+                            }
+                          }, 800));
+                        }, 1500));
+                      }, 800));
+                    }, 2500));
+                  }, 800));
+                }, 2500));
+              }, 800));
+            }, 2500));
+          }, 800));
+        }, 2500));
+      }, 1500));
+    }, 1000));
   }
   
   function handleAbortTask() {
@@ -271,25 +335,9 @@
     showHistoryView = false;
   }
   
-  function handleOpenMusic() {
-    showMusicModal = true;
-    // Update music state from manager
-    updateMusicState();
-  }
-  
-  function handleCloseMusic() {
-    showMusicModal = false;
-    // Sync state after modal closes
-    updateMusicState();
-  }
-  
-  function updateMusicState() {
-    musicState = {
-      currentStation: audioManager.currentStation,
-      isPlaying: audioManager.isPlaying,
-      volume: audioManager.volume,
-      isMuted: audioManager.isMuted
-    };
+  async function handleToggleMusic() {
+    await audioManager.toggle();
+    isMusicPlaying = audioManager.isPlaying;
   }
   
   // Save task to history (localStorage)
@@ -330,8 +378,8 @@
 <HomePage 
   onStartTask={handleStartTask}
   onViewHistory={handleViewHistory}
-  onOpenMusic={handleOpenMusic}
-  musicState={musicState}
+  onToggleMusic={handleToggleMusic}
+  isMusicPlaying={isMusicPlaying}
   activeTask={activeTask}
   timerState={timerState}
   totalTimeRemaining={totalTimeRemaining}
@@ -340,6 +388,7 @@
   onMarkComplete={handleMarkComplete}
   onAbortTask={handleAbortTask}
   onExtendTimer={handleExtendTimer}
+  onSkipFight={handleSkipFight}
   currentEnemy={currentEnemy}
   heroAnimation={heroAnimation}
   enemyAnimation={enemyAnimation}
@@ -360,18 +409,3 @@
   onClose={handleCloseHistory}
   history={taskHistory}
 />
-
-<!-- Render MusicModal component -->
-<MusicModal
-  show={showMusicModal}
-  onClose={handleCloseMusic}
-  currentStation={musicState.currentStation}
-  isPlaying={musicState.isPlaying}
-  volume={musicState.volume}
-  isMuted={musicState.isMuted}
-/>
-
-<style>
-  /* Global styles for the app can go here */
-</style>
-

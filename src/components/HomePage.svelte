@@ -2,8 +2,8 @@
   // Props - functions and data passed from parent
   export let onStartTask;
   export let onViewHistory;
-  export let onOpenMusic;
-  export let musicState;
+  export let onToggleMusic;
+  export let isMusicPlaying;
   export let activeTask = null;
   export let timerState = 'idle';
   export let totalTimeRemaining = 0;
@@ -12,6 +12,7 @@
   export let onMarkComplete;
   export let onAbortTask;
   export let onExtendTimer;
+  export let onSkipFight;
   export let currentEnemy = 1; // Which enemy to show (1, 2, or 3)
   export let heroAnimation = 'idle'; // 'idle', 'attack', 'hurt'
   export let enemyAnimation = 'idle'; // 'idle', 'attack', 'death', 'hurt'
@@ -57,17 +58,24 @@
   <!-- Music icon button (top right, left of history) -->
   <button 
     class="music-btn" 
-    on:click={onOpenMusic} 
-    title="Music Control"
-    class:playing={musicState?.isPlaying}
+    on:click={onToggleMusic} 
+    title="Toggle Music"
+    class:playing={isMusicPlaying}
   >
-    {musicState?.isPlaying ? '🔊' : '🔇'}
+    {isMusicPlaying ? '🔊' : '🔇'}
   </button>
   
   <!-- History icon button (top right) -->
   <button class="history-btn" on:click={onViewHistory} title="View History">
     📜
   </button>
+  
+  <!-- Skip Fight Button - Show during fight sequence -->
+  {#if inFightSequence}
+    <button class="skip-fight-btn" on:click={onSkipFight} title="Skip to results">
+      ⏭️ Skip Fight
+    </button>
+  {/if}
   
   <!-- Bottom Container - Horizontal Layout (like LinearLayout) -->
   <div class="bottom-container" class:fighting={inFightSequence && fightStep > 0}>
@@ -273,6 +281,47 @@
   
   .history-btn:active {
     transform: scale(1.05) rotate(5deg);
+  }
+  
+  /* Skip Fight Button - Center top during fight */
+  .skip-fight-btn {
+    position: absolute;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.9) 0%, rgba(255, 165, 0, 0.9) 100%);
+    border: 3px solid #FFD700;
+    border-radius: 25px;
+    padding: 15px 35px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 200;
+    font-family: 'Cinzel', 'Georgia', serif;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+  
+  .skip-fight-btn:hover {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    transform: translateX(-50%) scale(1.05);
+    box-shadow: 0 6px 25px rgba(255, 215, 0, 0.6);
+  }
+  
+  .skip-fight-btn:active {
+    transform: translateX(-50%) scale(0.98);
+  }
+  
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+    }
+    50% {
+      box-shadow: 0 4px 25px rgba(255, 215, 0, 0.7);
+    }
   }
   
   /* Bottom Container - Flexbox (like Android LinearLayout horizontal) */
