@@ -141,16 +141,20 @@ class AudioManager {
       console.log('Main music paused');
     }
 
-    // Play fight music
-    try {
-      this.fightAudio.currentTime = 0; // Start from beginning
-      console.log('About to play fight music...');
-      await this.fightAudio.play();
-      this.isFightMusicPlaying = true;
-      console.log('Fight music started successfully!');
-    } catch (err) {
-      console.error('Fight music playback failed:', err);
-      console.error('Error details:', err.name, err.message);
+    // Only play fight music if music was enabled (speaker was on)
+    if (this.wasPlayingBeforeFight) {
+      try {
+        this.fightAudio.currentTime = 0; // Start from beginning
+        console.log('About to play fight music...');
+        await this.fightAudio.play();
+        this.isFightMusicPlaying = true;
+        console.log('Fight music started successfully!');
+      } catch (err) {
+        console.error('Fight music playback failed:', err);
+        console.error('Error details:', err.name, err.message);
+      }
+    } else {
+      console.log('Music was off, not playing fight music');
     }
   }
 

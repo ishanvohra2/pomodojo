@@ -79,25 +79,27 @@
   
   <!-- Bottom Container - Horizontal Layout (like LinearLayout) -->
   <div class="bottom-container" class:fighting={inFightSequence && fightStep > 0}>
-    <!-- Hero character (left) -->
-    <div class="hero-container">
-      <div class="hero {heroAnimation}"></div>
-    </div>
-    
-    <!-- Right side - Either button or enemy based on state -->
-    <div class="right-container">
-      {#if !activeTask}
-        <!-- Start New Task button - Only show when no active task -->
-        <button class="start-task-btn" on:click={onStartTask}>
-          ⚔️ Start New Task
-        </button>
-      {:else}
-        <!-- Enemy character - Only show when task is active -->
+    <!-- Characters container - holds hero and enemy side by side -->
+    <div class="characters-row">
+      <!-- Hero character (left) -->
+      <div class="hero-container">
+        <div class="hero {heroAnimation}"></div>
+      </div>
+      
+      <!-- Enemy character - Only show when task is active -->
+      {#if activeTask}
         <div class="enemy-container enemy-container-{currentEnemy}">
           <div class="enemy {enemyAnimation} enemy-{currentEnemy}"></div>
         </div>
       {/if}
     </div>
+    
+    <!-- Start New Task button - Below characters when no active task -->
+    {#if !activeTask}
+      <button class="start-task-btn" on:click={onStartTask}>
+        ⚔️ Start New Task
+      </button>
+    {/if}
   </div>
   
   <!-- Conditional rendering for timer HUD -->
@@ -135,37 +137,39 @@
       </div>
     </div>
     
-    <!-- Action Buttons - Bottom Center -->
-    {#if timerState === 'failed'}
-      <!-- Failed state - show extend/forfeit options -->
-      <div class="action-buttons failed">
-        <div class="failed-message">Time's up! Enemy strikes!</div>
-        <div class="button-row">
-          <input 
-            type="number" 
-            bind:value={extendMinutes} 
-            min="1" 
-            class="extend-input"
-            placeholder="Minutes"
-          />
-          <button class="extend-btn" on:click={() => onExtendTimer(extendMinutes)}>
-            ⏱️ Extend +{extendMinutes}min
+    <!-- Action Buttons - Bottom Center (Hidden during fight sequence) -->
+    {#if !inFightSequence}
+      {#if timerState === 'failed'}
+        <!-- Failed state - show extend/forfeit options -->
+        <div class="action-buttons failed">
+          <div class="failed-message">Time's up! Enemy strikes!</div>
+          <div class="button-row">
+            <input 
+              type="number" 
+              bind:value={extendMinutes} 
+              min="1" 
+              class="extend-input"
+              placeholder="Minutes"
+            />
+            <button class="extend-btn" on:click={() => onExtendTimer(extendMinutes)}>
+              ⏱️ Extend +{extendMinutes}min
+            </button>
+            <button class="abort-link" on:click={onAbortTask}>
+              ✕ Forfeit
+            </button>
+          </div>
+        </div>
+      {:else}
+        <!-- Normal state - show complete/abort -->
+        <div class="action-buttons">
+          <button class="complete-btn" on:click={onMarkComplete}>
+            ✓ Complete
           </button>
           <button class="abort-link" on:click={onAbortTask}>
-            ✕ Forfeit
+            ✕ Abort
           </button>
         </div>
-      </div>
-    {:else}
-      <!-- Normal state - show complete/abort -->
-      <div class="action-buttons">
-        <button class="complete-btn" on:click={onMarkComplete}>
-          ✓ Complete
-        </button>
-        <button class="abort-link" on:click={onAbortTask}>
-          ✕ Abort
-        </button>
-      </div>
+      {/if}
     {/if}
   {/if}
 </main>
@@ -203,21 +207,25 @@
     margin: 0 0 15px 0;
     font-weight: bold;
     letter-spacing: 4px;
+    font-family: 'Press Start 2P', 'Cinzel', 'Georgia', serif;
   }
   
   .subtitle {
     font-size: 1.5rem;
     color: #f0f0f0;
     margin: 0;
-    font-style: italic;
+    font-style: normal;
     text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.9);
-    font-weight: 300;
+    font-weight: 400;
+    font-family: 'Press Start 2P', 'Cinzel', 'Georgia', serif;
+    line-height: 1.6;
   }
   
-  /* Music icon button (top right, left of history button) */
+  /* Music icon button (bottom right, left of history button) */
   .music-btn {
     position: absolute;
-    top: 30px;
+    top: auto;
+    bottom: 30px;
     right: 120px; /* Left of history button */
     background: rgba(0, 0, 0, 0.6);
     border: 3px solid rgba(255, 215, 0, 0.5);
@@ -253,10 +261,11 @@
     transform: scale(1.05);
   }
   
-  /* History icon button (top right) */
+  /* History icon button (bottom right) */
   .history-btn {
     position: absolute;
-    top: 30px;
+    top: auto;
+    bottom: 30px;
     right: 30px;
     background: rgba(0, 0, 0, 0.6);
     border: 3px solid rgba(255, 215, 0, 0.5);
@@ -324,25 +333,39 @@
     }
   }
   
-  /* Bottom Container - Flexbox (like Android LinearLayout horizontal) */
+  /* Bottom Container - Vertical stacking for all platforms */
   .bottom-container {
     position: absolute;
     bottom: 20%;
     left: 0;
     right: 0;
     display: flex;
-    justify-content: space-between;
-    align-items: flex-end; /* Align to bottom baseline */
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     padding: 0 8%;
     z-index: 2;
+    gap: 25px;
+    transition: all 0.8s ease;
+  }
+  
+  /* Characters row - holds hero and enemy side by side */
+  .characters-row {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 0;
     transition: all 0.8s ease;
   }
   
   /* Fighting mode - bring characters closer for dramatic combat */
   .bottom-container.fighting {
+    flex-direction: row;
+  }
+  
+  .bottom-container.fighting .characters-row {
     justify-content: center;
     gap: 0px; /* Space between hero and enemy - close combat */
-    padding: 0; /* Remove side padding to center properly */
   }
   
   /* Hero container - no positioning needed, flex handles it */
@@ -396,13 +419,6 @@
     to { background-position: -1050px 0; } /* 3 frames × 350px */
   }
   
-  /* Right container - holds either button or enemy */
-  .right-container {
-    flex-shrink: 0;
-    display: flex;
-    align-items: flex-end;
-  }
-  
   /* Start New Task button */
   .start-task-btn {
     padding: 30px 55px;
@@ -435,6 +451,12 @@
     flex-shrink: 0;
     transform: scaleX(-1); /* Flip to face left */
     transition: margin 0.8s ease;
+    margin-left: 20px; /* Add some margin from hero */
+  }
+  
+  /* Hero gets margin when enemy is present (during active task) */
+  .characters-row .hero-container {
+    margin-right: 20px;
   }
   
   /* Enemy-specific vertical alignment adjustments */
@@ -631,7 +653,7 @@
     color: #FFD700;
     letter-spacing: 2px;
     margin-bottom: 5px;
-    font-family: 'Cinzel', 'Georgia', serif;
+    font-family: 'Press Start 2P', 'Cinzel', 'Georgia', serif;
   }
   
   .task-title {
@@ -668,6 +690,7 @@
     padding: 6px 20px;
     border-radius: 20px;
     display: inline-block;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
   }
   
   .status-text.focus {
@@ -686,7 +709,7 @@
     font-size: 3.5rem;
     font-weight: 900;
     color: white;
-    font-family: 'Courier New', monospace;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
     letter-spacing: 6px;
     text-shadow: 3px 3px 0 #000,
                  0 0 20px rgba(255, 215, 0, 0.6);
@@ -728,7 +751,7 @@
     color: #ff6b6b;
     letter-spacing: 2px;
     margin-bottom: 5px;
-    font-family: 'Cinzel', 'Georgia', serif;
+    font-family: 'Press Start 2P', 'Cinzel', 'Georgia', serif;
   }
   
   /* Action Buttons - Bottom Center */
@@ -874,6 +897,570 @@
     transform: translateY(2px);
     box-shadow: 0 2px 0 #CC7000,
                 0 3px 10px rgba(0, 0, 0, 0.4);
+  }
+  
+  /* ===== RESPONSIVE DESIGN - MEDIA QUERIES ===== */
+  
+  /* Tablet and smaller screens */
+  @media (max-width: 768px) {
+    /* Header - Reduce title size */
+    .header {
+      top: 20px;
+    }
+    
+    h1 {
+      font-size: 3rem;
+      letter-spacing: 2px;
+      margin: 0 0 8px 0;
+    }
+    
+    .subtitle {
+      font-size: 1rem;
+    }
+    
+    /* Music and History buttons - Smaller for tablet */
+    .music-btn,
+    .history-btn {
+      width: 50px;
+      height: 50px;
+      font-size: 24px;
+      bottom: 20px;
+      border-width: 2px;
+    }
+    
+    .music-btn {
+      right: 85px;
+    }
+    
+    .history-btn {
+      right: 20px;
+    }
+    
+    /* Skip fight button */
+    .skip-fight-btn {
+      top: 20px;
+      padding: 10px 20px;
+      font-size: 0.9rem;
+    }
+    
+    /* Game HUD - Smaller */
+    .game-hud {
+      top: 80px;
+      width: 95%;
+      padding: 15px;
+      gap: 10px;
+    }
+    
+    .task-title {
+      font-size: 1.1rem;
+    }
+    
+    .task-desc-small {
+      font-size: 0.75rem;
+      max-width: 200px;
+    }
+    
+    .player-label,
+    .enemy-label {
+      font-size: 0.75rem;
+    }
+    
+    .main-timer {
+      font-size: 2.5rem;
+      letter-spacing: 4px;
+    }
+    
+    .status-text {
+      font-size: 0.75rem;
+      padding: 4px 12px;
+    }
+    
+    /* Bottom container - adjust for tablet */
+    .bottom-container {
+      bottom: 10%;
+      gap: 20px;
+      padding: 0 5%;
+    }
+    
+    /* Characters row - adjust spacing */
+    .characters-row {
+      gap: 15px;
+    }
+    
+    /* Fighting mode adjustments for tablet */
+    .fighting .hero-container {
+      margin-right: -50px;
+    }
+    
+    .fighting .enemy-container {
+      margin-left: -150px;
+    }
+    
+    /* Enemy container adjustments */
+    .enemy-container-1 {
+      margin-bottom: -100px;
+    }
+    
+    .enemy-container-2 {
+      margin-bottom: -110px;
+    }
+    
+    .enemy-container-3 {
+      margin-bottom: -120px;
+    }
+    
+    /* Characters - Smaller */
+    .hero {
+      width: 250px;
+      height: 250px;
+      background-size: auto 250px;
+    }
+    
+    /* Update hero animations for smaller size */
+    @keyframes hero-idle {
+      from { background-position: 0 0; }
+      to { background-position: -2500px 0; } /* 10 frames × 250px */
+    }
+    
+    @keyframes hero-attack {
+      from { background-position: 0 0; }
+      to { background-position: -1750px 0; } /* 7 frames × 250px */
+    }
+    
+    @keyframes hero-hurt {
+      from { background-position: 0 0; }
+      to { background-position: -750px 0; } /* 3 frames × 250px */
+    }
+    
+    .enemy {
+      width: 400px;
+      height: 400px;
+      background-size: auto 400px;
+    }
+    
+    /* Update enemy animations for smaller size */
+    @keyframes enemy-1-idle {
+      from { background-position: 0 0; }
+      to { background-position: -3200px 0; } /* 8 frames × 400px */
+    }
+    
+    @keyframes enemy-1-attack {
+      from { background-position: 0 0; }
+      to { background-position: -3200px 0; }
+    }
+    
+    @keyframes enemy-1-hurt {
+      from { background-position: 0 0; }
+      to { background-position: -1600px 0; } /* 4 frames × 400px */
+    }
+    
+    @keyframes enemy-1-death {
+      from { background-position: 0 0; }
+      to { background-position: -2800px 0; } /* 7 frames × 400px */
+    }
+    
+    @keyframes enemy-2-idle {
+      from { background-position: 0 0; }
+      to { background-position: -3200px 0; }
+    }
+    
+    @keyframes enemy-2-attack {
+      from { background-position: 0 0; }
+      to { background-position: -2000px 0; } /* 5 frames × 400px */
+    }
+    
+    @keyframes enemy-2-hurt {
+      from { background-position: 0 0; }
+      to { background-position: -1200px 0; } /* 3 frames × 400px */
+    }
+    
+    @keyframes enemy-2-death {
+      from { background-position: 0 0; }
+      to { background-position: -3200px 0; }
+    }
+    
+    @keyframes enemy-3-idle {
+      from { background-position: 0 0; }
+      to { background-position: -1600px 0; } /* 4 frames × 400px */
+    }
+    
+    @keyframes enemy-3-attack {
+      from { background-position: 0 0; }
+      to { background-position: -2400px 0; } /* 6 frames × 400px */
+    }
+    
+    @keyframes enemy-3-hurt {
+      from { background-position: 0 0; }
+      to { background-position: -1200px 0; }
+    }
+    
+    @keyframes enemy-3-death {
+      from { background-position: 0 0; }
+      to { background-position: -2800px 0; }
+    }
+    
+    /* Start button */
+    .start-task-btn {
+      padding: 20px 35px;
+      font-size: 1.1rem;
+    }
+    
+    /* Action buttons */
+    .action-buttons {
+      bottom: 20px;
+      padding: 12px 15px;
+    }
+    
+    .complete-btn {
+      padding: 12px 25px;
+      font-size: 0.9rem;
+    }
+    
+    .abort-link {
+      padding: 12px 20px;
+      font-size: 0.75rem;
+    }
+    
+    .extend-btn {
+      padding: 12px 20px;
+      font-size: 0.85rem;
+    }
+    
+    .extend-input {
+      width: 70px;
+      padding: 10px;
+      font-size: 0.9rem;
+    }
+    
+    .failed-message {
+      font-size: 0.95rem;
+    }
+  }
+  
+  /* Mobile phones - Portrait */
+  @media (max-width: 480px) {
+    /* Use portrait background for mobile */
+    main {
+      background-image: url('/assets/bg_portrait.jpg');
+    }
+    
+    /* Header - Even smaller */
+    .header {
+      top: 15px;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      letter-spacing: 1px;
+      margin: 0 0 5px 0;
+    }
+    
+    .subtitle {
+      font-size: 0.75rem;
+    }
+    
+    /* Music and History buttons - Smaller for mobile */
+    .music-btn,
+    .history-btn {
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+      bottom: 15px;
+      border-width: 2px;
+    }
+    
+    .music-btn {
+      right: 65px;
+    }
+    
+    .history-btn {
+      right: 15px;
+    }
+    
+    /* Skip fight button */
+    .skip-fight-btn {
+      top: 15px;
+      padding: 8px 15px;
+      font-size: 0.75rem;
+      border-width: 2px;
+    }
+    
+    /* Game HUD - Compact */
+    .game-hud {
+      top: 60px;
+      width: 98%;
+      padding: 10px;
+      gap: 8px;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .hud-left,
+    .hud-right {
+      text-align: center;
+      width: 100%;
+    }
+    
+    .hud-center {
+      width: 100%;
+      min-width: auto;
+    }
+    
+    .task-title {
+      font-size: 0.9rem;
+    }
+    
+    .task-desc-small {
+      font-size: 0.65rem;
+      max-width: 100%;
+    }
+    
+    .player-label,
+    .enemy-label {
+      font-size: 0.65rem;
+      letter-spacing: 1px;
+    }
+    
+    .main-timer {
+      font-size: 2rem;
+      letter-spacing: 3px;
+    }
+    
+    .status-text {
+      font-size: 0.65rem;
+      padding: 3px 10px;
+      letter-spacing: 2px;
+    }
+    
+    .total-time-bar {
+      height: 8px;
+    }
+    
+    .total-time-text {
+      font-size: 0.7rem;
+    }
+    
+    /* Bottom container - adjust for mobile */
+    .bottom-container {
+      bottom: 8%;
+      gap: 15px;
+      padding: 0 3%;
+    }
+    
+    /* Characters row - adjust spacing */
+    .characters-row {
+      gap: 10px;
+    }
+    
+    /* Fighting mode adjustments for mobile */
+    .fighting .hero-container {
+      margin-right: -30px;
+    }
+    
+    .fighting .enemy-container {
+      margin-left: -100px;
+    }
+    
+    /* Enemy container adjustments for mobile */
+    .enemy-container-1 {
+      margin-bottom: -70px;
+    }
+    
+    .enemy-container-2 {
+      margin-bottom: -80px;
+    }
+    
+    .enemy-container-3 {
+      margin-bottom: -85px;
+    }
+    
+    /* Characters - Much smaller for mobile */
+    .hero {
+      width: 180px;
+      height: 180px;
+      background-size: auto 180px;
+    }
+    
+    /* Update hero animations for mobile size */
+    @keyframes hero-idle {
+      from { background-position: 0 0; }
+      to { background-position: -1800px 0; } /* 10 frames × 180px */
+    }
+    
+    @keyframes hero-attack {
+      from { background-position: 0 0; }
+      to { background-position: -1260px 0; } /* 7 frames × 180px */
+    }
+    
+    @keyframes hero-hurt {
+      from { background-position: 0 0; }
+      to { background-position: -540px 0; } /* 3 frames × 180px */
+    }
+    
+    .enemy {
+      width: 280px;
+      height: 280px;
+      background-size: auto 280px;
+    }
+    
+    /* Update enemy animations for mobile size */
+    @keyframes enemy-1-idle {
+      from { background-position: 0 0; }
+      to { background-position: -2240px 0; } /* 8 frames × 280px */
+    }
+    
+    @keyframes enemy-1-attack {
+      from { background-position: 0 0; }
+      to { background-position: -2240px 0; }
+    }
+    
+    @keyframes enemy-1-hurt {
+      from { background-position: 0 0; }
+      to { background-position: -1120px 0; } /* 4 frames × 280px */
+    }
+    
+    @keyframes enemy-1-death {
+      from { background-position: 0 0; }
+      to { background-position: -1960px 0; } /* 7 frames × 280px */
+    }
+    
+    @keyframes enemy-2-idle {
+      from { background-position: 0 0; }
+      to { background-position: -2240px 0; }
+    }
+    
+    @keyframes enemy-2-attack {
+      from { background-position: 0 0; }
+      to { background-position: -1400px 0; } /* 5 frames × 280px */
+    }
+    
+    @keyframes enemy-2-hurt {
+      from { background-position: 0 0; }
+      to { background-position: -840px 0; } /* 3 frames × 280px */
+    }
+    
+    @keyframes enemy-2-death {
+      from { background-position: 0 0; }
+      to { background-position: -2240px 0; }
+    }
+    
+    @keyframes enemy-3-idle {
+      from { background-position: 0 0; }
+      to { background-position: -1120px 0; } /* 4 frames × 280px */
+    }
+    
+    @keyframes enemy-3-attack {
+      from { background-position: 0 0; }
+      to { background-position: -1680px 0; } /* 6 frames × 280px */
+    }
+    
+    @keyframes enemy-3-hurt {
+      from { background-position: 0 0; }
+      to { background-position: -840px 0; }
+    }
+    
+    @keyframes enemy-3-death {
+      from { background-position: 0 0; }
+      to { background-position: -1960px 0; }
+    }
+    
+    /* Start button */
+    .start-task-btn {
+      padding: 15px 25px;
+      font-size: 0.9rem;
+      border-width: 3px;
+    }
+    
+    /* Action buttons */
+    .action-buttons {
+      bottom: 15px;
+      padding: 10px 12px;
+      gap: 10px;
+    }
+    
+    .complete-btn {
+      padding: 10px 20px;
+      font-size: 0.8rem;
+      border-width: 2px;
+    }
+    
+    .abort-link {
+      padding: 10px 15px;
+      font-size: 0.7rem;
+    }
+    
+    .action-buttons.failed {
+      padding: 15px 18px;
+    }
+    
+    .button-row {
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+    }
+    
+    .extend-input {
+      width: 100%;
+      padding: 10px;
+      font-size: 0.85rem;
+    }
+    
+    .extend-btn {
+      width: 100%;
+      padding: 10px 18px;
+      font-size: 0.8rem;
+      border-width: 2px;
+    }
+    
+    .abort-link {
+      width: 100%;
+    }
+    
+    .failed-message {
+      font-size: 0.85rem;
+    }
+  }
+  
+  /* Very small phones - Extra compact */
+  @media (max-width: 360px) {
+    h1 {
+      font-size: 1.5rem;
+    }
+    
+    .subtitle {
+      font-size: 0.65rem;
+    }
+    
+    .music-btn,
+    .history-btn {
+      width: 35px;
+      height: 35px;
+      font-size: 18px;
+    }
+    
+    .music-btn {
+      right: 55px;
+    }
+    
+    .history-btn {
+      right: 10px;
+    }
+    
+    .main-timer {
+      font-size: 1.6rem;
+    }
+    
+    .hero {
+      width: 140px;
+      height: 140px;
+      background-size: auto 140px;
+    }
+    
+    .enemy {
+      width: 220px;
+      height: 220px;
+      background-size: auto 220px;
+    }
   }
 </style>
 
